@@ -1,120 +1,75 @@
 import tkinter as tk
-from tkinter import font
-import cv2
-from PIL import Image, ImageTk
 from tkinter import filedialog
+from PIL import Image, ImageTk
+import cv2
+import numpy as np
+from keras.models import model_from_json
 
+json_file = open('emotion_model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+emotion_model = model_from_json(loaded_model_json)
+emotion_model.load_weights("emotion_model.h5")
 
-def start_camera():
-    global cap, start_button, other_button, stop_button
-    canvas.pack()
-    cap = cv2.VideoCapture(0)
-    Live_button.pack_forget()
-    Upload_button.pack_forget()
-    backlable.pack_forget()
-    update()
+emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+
+def upload_image():
+    file_path = filedialog.askopenfilename()
+    img = Image.open(file_path)
+    img = img.resize((250, 250), Image.ANTIALIAS)
+    img = ImageTk.PhotoImage(img)
+    panel = tk.Label(root, image=img)
+    panel.image = img
+    panel.pack()
+
+    frame = cv2.imread(file_path)
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    num_faces = face_detector.detectMultiScale(gray_frame, scaleFactor=1.3, minNeighbors=5)
+
+    for (x, y, w, h) in num_faces:
+        roi_gray_frame = gray_frame[y:y + h, x:x + w]
+        cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray_frame, (48, 48)), -1), 0)
+        emotion_prediction = emotion_model.predict(cropped_img)
+        maxindex = int(np.argmax(emotion_prediction))
+        print("Emotion: ", emotion_dict[maxindex])
+
+def live_detection():
+    cap = cv2.VideoCapture(0)  # 0 is the default webcam
     
-    
-def update():
-    global cap, canvas, photo, window
-    ret, frame = cap.read()
-    if ret:
-        photo = tk.PhotoImage(data=cv2.imencode('.ppm', frame)[1].tobytes())
-        canvas.create_image(0, 0, anchor=tk.NW, image=photo, tags='stream')
-    if cap is not None:
-        window.after(15, update)
-        
-        
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-def other_option(): # hena hykon function upload photo aw take photo
-    # Placeholder for other option functionality
-    window.filename = filedialog.askopenfilename(initialdir="/gui/images", title="Select a file",filetypes=(("png files", "*.png"),("jpg files", "*.jpg")))
-    Live_button.pack_forget()
-    Upload_button.pack_forget()
-    backlable.place_forget()
-    uploadedpic= tk.Label(window, text= window.filename).pack()
-    uploaded =ImageTk.PhotoImage(Image.open(window.filename))
-    piclable = tk.Label(image=uploaded).pack()
-    
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        num_faces = face_detector.detectMultiScale(gray_frame, scaleFactor=1.3, minNeighbors=5)
 
+        for (x, y, w, h) in num_faces:
+            cv2.rectangle(frame, (x, y-50), (x+w, y+h+10), (0, 255, 0), 4)
+            roi_gray_frame = gray_frame[y:y + h, x:x + w]
+            cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray_frame, (48, 48)), -1), 0)
+            emotion_prediction = emotion_model.predict(cropped_img)
+            maxindex = int(np.argmax(emotion_prediction))
+            cv2.putText(frame, emotion_dict[maxindex], (x+5, y-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
+        cv2.imshow('Live Emotion Detection', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-
-def stop_camera():
-    global cap, start_button, other_button, stop_button
     cap.release()
-    #stop_button.pack_forget()
-    Live_button.pack()
-    Upload_button.pack()
-    camera_frame.pack_forget()
-    backlable.place(relx=0, rely=0, relwidth=1, relheight=1)
-    window.after(1000, lambda: camera_frame.tkraise())
-    camera_frame.pack()
-    window.focus_force()
-    
-  
+    cv2.destroyAllWindows()
 
 
-def close_window():
-    window.destroy()
-    
-    
+root = tk.Tk()
+root.geometry("800x600")
 
-if __name__ == '__main__':
-    cap = None
-    photo = None
-    window = tk.Tk()
-    window.geometry('1000x800')
-    window.title("AI project")
-    canvas = tk.Canvas(window,width = 450 , height= 700)
-    
-    
-    #camera frame stuff
-    
-    camera_frame = tk.Frame(window)
-    camera_frame.pack(side="left", fill="x", expand=True)
-    Stop_button = tk.Button(camera_frame, text="Stop Camera", command=stop_camera, state="active")
-    Stop_button.pack(side="bottom", fill="y",  expand=True)
-    canvas = tk.Canvas(camera_frame, width=450, height=700)
-    canvas.pack()
-    
-    
-    # Other Frame Stuff
-    other_frame = tk.Frame(window)
-    other_frame.pack(side="right", fill="both", expand=True)
-    #other_button = tk.Button(other_frame, text="Other Function", command=)
-    #other_button.pack(side="bottom")
-    
-    #Swich Fram Stuff
-    #page_switcher_frame = tk.Frame(window)
-    #page_switcher_frame.pack(side="bottom", fill="x")
-   
-    
-    #main page Stuff
-    image = Image.open("1.jpg")
-    new_size = (window.winfo_screenwidth(), window.winfo_screenheight())
-    image = image.resize(new_size)
-    backpic = ImageTk.PhotoImage(image)
-    backlable= tk.Label(window, image = backpic)
-    backlable.place(relx=0, rely=0, relwidth=1, relheight=1)
-    
-    #Live Button
-    image1 = Image.open("2.jpg")
-    image1 = image1.resize((80,60))
-    photo = ImageTk.PhotoImage(image1)
-    Live_button = tk.Button(window, image=photo , command=start_camera, width= 80, height= 30)
-    Live_button.place(relx=0.5, rely=0.87, anchor="center")
-    
-    #Ubload Button
-    image2 = Image.open("3.jpg")
-    image2 = image2.resize((90,70))
-    photo2 = ImageTk.PhotoImage(image2)
-    Upload_button = tk.Button(window, image=photo2 , command=other_option, width= 90, height= 30)
-    Upload_button.place(relx=0.5, rely= 0.93, anchor="center")    
-    
-    
-    
-    
-    
-    
-    window.mainloop()
+upload_btn = tk.Button(root, text="Upload an image", command=upload_image)
+upload_btn.pack()
+panel = tk.Label(root)
+panel.pack()
+live_btn = tk.Button(root, text="Live detection", command=live_detection)
+live_btn.pack()
+
+root.mainloop()
