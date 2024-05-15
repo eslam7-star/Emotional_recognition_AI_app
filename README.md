@@ -17,3 +17,4 @@ A.I project that detects facial expressions and recommends music based on the de
 
 - the second part done using deepface package in real time using camera
     - Find it in `videoEmotion.py`
+    - press q to exit live_detection mode
