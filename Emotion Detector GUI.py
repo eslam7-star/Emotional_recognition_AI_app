@@ -65,21 +65,21 @@ def upload_image():
 
         # Prepare input data for prediction
         input_data = {
-            'FRUITS_VEGGIES': random.randint(1, 5) ,
-            'PLACES_VISITED': random.randint(1, 5),
-            'CORE_CIRCLE': random.randint(1, 5) ,
-            'SUPPORTING_OTHERS': random.randint(1, 5) ,
-            'SOCIAL_NETWORK': random.randint(1, 5) ,
-            'ACHIEVEMENT': random.randint(1, 5) ,
-            'DONATION': random.randint(1, 5) ,
-            'BMI_RANGE':  random.randint(1, 5) ,
-            'TODO_COMPLETED':  random.randint(1, 5) ,
-            'FLOW':  random.randint(1, 5) ,
-            'DAILY_STEPS':  random.randint(1, 5) ,
-            'LIVE_VISION':  random.randint(1, 5) ,
-            'SLEEP_HOURS':  random.randint(1, 5) ,
-            'LOST_VACATION':  random.randint(1, 5) ,
-            'DAILY_SHOUTING':  random.randint(1, 5) ,
+            'FRUITS_VEGGIES': random.randint(1, 10) ,
+            'PLACES_VISITED': random.randint(1, 10),
+            'CORE_CIRCLE': random.randint(1, 10) ,
+            'SUPPORTING_OTHERS': random.randint(1, 10) ,
+            'SOCIAL_NETWORK': random.randint(1, 10) ,
+            'ACHIEVEMENT': random.randint(1, 10),
+            'DONATION': random.randint(1, 10) ,
+            'BMI_RANGE':  random.randint(1, 10) ,
+            'TODO_COMPLETED':  random.randint(1, 10) ,
+            'FLOW':  random.randint(1, 10) ,
+            'DAILY_STEPS':  random.randint(1, 10) ,
+            'LIVE_VISION':  random.randint(1, 10) ,
+            'SLEEP_HOURS':  random.randint(1, 10) ,
+            'LOST_VACATION':  random.randint(1, 10) ,
+            'DAILY_SHOUTING':  random.randint(1, 10) ,
             'SUFFICIENT_INCOME': sufficient_income,
             'PERSONAL_AWARDS': personal_awards,
             'TIME_FOR_PASSION': time_for_passion,
@@ -94,11 +94,38 @@ def upload_image():
 
         # Convert input data to DataFrame
         input_df = pd.DataFrame([input_data])
-
+        
         print(input_df)
         # Predict using the loaded model
         predicted_value = loaded_model.predict(input_df)
+        cv2.putText(frame, emotion_str, (x, y-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+        # Display the image with the emotion overlay
+        cv2.imshow('Detected Emotion', frame)
+        cv2.waitKey(0)
+
+        # Close the window after a key is pressed
+        cv2.destroyAllWindows()
         print("Predicted value:", predicted_value)
+       
+        cv2.putText(frame, emotion_str, (x, y-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+
+        # Close the window after a key is pressed
+        cv2.destroyAllWindows()
+        print("Predicted value:", predicted_value)
+        output_window = tk.Toplevel()
+        output_window.title("Prediction Results")
+        output_window.geometry("500x300")
+
+        # Create a text widget to display DataFrame and prediction
+        output_text = tk.Text(output_window, wrap="word", font=("Helvetica", 12))
+        output_text.pack(fill="both", expand=True)
+
+        # Display DataFrame and prediction
+        output_text.insert(tk.END, "Input DataFrame:\n")
+        output_text.insert(tk.END, str(input_df))
+        output_text.insert(tk.END, "\n\nPredicted value: " + str(predicted_value))
+
 
 
 # Function for live emotion detection using webcam
@@ -154,9 +181,9 @@ input_frame.pack(pady=20)
 scale_options = [str(i) for i in range(1, 11)]
 boolean_options = ["True", "False"]
 
-sufficient_income_combo = create_dropdown("Sufficient Income (1-5):", scale_options, input_frame)
-personal_awards_combo = create_dropdown("Personal Awards (1-5):", scale_options, input_frame)
-time_for_passion_combo = create_dropdown("Time for Passion (1-5):", scale_options, input_frame)
+sufficient_income_combo = create_dropdown("Sufficient Income (1-10):", scale_options, input_frame)
+personal_awards_combo = create_dropdown("Personal Awards (1-10):", scale_options, input_frame)
+time_for_passion_combo = create_dropdown("Time for Passion (1-10):", scale_options, input_frame)
 age_combo = create_dropdown("Select Age Range:", ["Less than 20", "21 to 35", "36 to 50", "51 or more"], input_frame)
 gender_combo = create_dropdown("Select Gender:", ["Female", "Male"], input_frame)
 
